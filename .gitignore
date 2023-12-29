@@ -1,2 +1,6 @@
 __pycache__
-venv/
+env/
+.vscode/
+hash.txt
+test.py
+rockyou.txt
