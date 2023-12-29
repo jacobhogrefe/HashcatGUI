@@ -4,3 +4,4 @@ env/
 hash.txt
 test.py
 rockyou.txt
+.DS_Store
