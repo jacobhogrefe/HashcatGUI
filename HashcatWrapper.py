@@ -33,16 +33,11 @@ def hash_file_path(hash_value):
     return os.path.abspath("hash.txt")
 
 # runs the hashcat command
-def run_hashcat(hash, wordlist_path):
-    hashcat_command = [
+def build_command(hash, wordlist_path):
+    return [
         'hashcat',
-        '-a 0',
+        '-a', '0',
         '-m', str(hash_type(hash)),
         hash_file_path(hash),
         wordlist_path
     ]
-    
-    try:
-        subprocess.run(hashcat_command, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error: {e.output}")
