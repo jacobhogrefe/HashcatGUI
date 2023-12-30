@@ -5,6 +5,10 @@ Author: Jacob Hogrefe
 '''
 import customtkinter as ctk
 from tkinter import filedialog
+from tkinter import Text
+from HashcatWrapper import build_command
+import threading
+import subprocess
 
 # screen for putting in the given hash and selecting the path for the wordlist
 class InputScreen(ctk.CTkFrame):
@@ -36,13 +40,18 @@ class InputScreen(ctk.CTkFrame):
     def choose_file(self):
         file_path = filedialog.askopenfilename()
         if file_path:
-            self.file_path_label.config(text=f"Wordlist File: {file_path}")
+            self.wordlist_file_label.configure(text=f"Wordlist File: {file_path}")
 
     def next_screen(self):
         # pass user input and file path to the next screen
         user_hash = self.hash_entry_var.get()
-        wordlist_path = self.wordlist_file_label.cget("text").replace("Chosen File: ", "")
-        self.master.show_screen(ResultScreen, user_hash=user_hash, wordlist_path=wordlist_path)
+        wordlist_path = self.wordlist_file_label.cget("text").replace("Wordlist File: ", "")
+        if user_hash and wordlist_path:
+            self.master.show_screen(ResultScreen, user_hash=user_hash, wordlist_path=wordlist_path)
+        else:
+            # display warning message that both fields need to be filled out
+            feedback_label = ctk.CTkLabel(self, text="Please enter a hash and choose a wordlist file.")
+            feedback_label.pack(pady=5)
 
 # screen for displaying the output of hashcat, and showing the result after cracking        
 class ResultScreen(ctk.CTkFrame):
@@ -53,9 +62,43 @@ class ResultScreen(ctk.CTkFrame):
         self.create_widgets()
     
     def create_widgets(self):
-        finish_button = ctk.CTkButton(self, text="Finish", command=self.finish)
-        finish_button.pack(pady=10)
+        self.output_text = Text(self, height=30, width=100)
+        self.output_text.pack(pady=10)
 
-    def finish(self):
-        # Add any actions or cleanup needed before exiting the application
-        self.master.destroy()
+        start_button = ctk.CTkButton(self, text="Start hashcat", command=self.start_process)
+        start_button.pack(pady=5)
+
+    def start_process(self):
+        # clear text
+        self.output_text.delete("1.0", ctk.END)
+        
+        # start the subprocess in a separate thread
+        threading.Thread(target=self.run_subprocess, daemon=True).start()
+
+    def run_subprocess(self):
+        command = build_command(self.user_hash, self.wordlist_path)
+        
+        try:
+            # capture its output of the subprocess
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+            # Periodically check for new output
+            while True:
+                output_line = process.stdout.readline()
+                if not output_line:
+                    break  # No more output
+                self.update_output(output_line.strip())
+
+            # wait for the process to complete
+            process.wait()
+
+        except Exception as e:
+            self.update_output(f"Error: {e}")
+
+    def update_output(self, text):
+        # append the new text to the text widget
+        self.output_text.insert(ctk.END, text + "\n")
+        # show newest output
+        self.output_text.see(ctk.END)
+        # update event loop
+        self.update_idletasks()
