@@ -14,9 +14,13 @@ When I was using hashcat for one of my Cybersecurity labs, I felt that the comma
 
 As hashcat doesn't come preinstalled, here are instructions to install it.
 
+### Mac and Linux
 Run the following commands in the terminal:
+
 `sudo apt update`
+
 `sudo apt upgrade`
+
 `sudo apt install hashcat`
 
 ## Setup
@@ -35,7 +39,6 @@ Install the necessary versions of the required packages:
 ## How to Run
 
 Just run the following command in the directory of the project:
-
 `python3 HashcatGUI.py`
 
 ## Additional Feature Ideas
@@ -43,6 +46,7 @@ Just run the following command in the directory of the project:
 * Supporting more hash cracking methods
 * Implement more of the hashcat CLI program into the HashcatWrapper file
 * Functionality on Windows devices
+* Add more advanced functionality to 
 
 ## Additional Resources
 It's good to have an up-to-date wordlist to crack hashes from. This one I found online should do the trick.
