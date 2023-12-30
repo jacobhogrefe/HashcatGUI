@@ -15,7 +15,7 @@ When I was using hashcat for one of my Cybersecurity labs, I felt that the comma
 ## Screenshots
 
 Start screen of the application
-![Start Screen](images/star_screen.jpg)
+![Start Screen](images/start_screen.jpg)
 
 What the app looks like before the hash starts being cracked
 ![Before cracking begins](images/before_hash_cracks.jpg)
