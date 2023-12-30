@@ -62,7 +62,7 @@ class ResultScreen(ctk.CTkFrame):
         self.create_widgets()
     
     def create_widgets(self):
-        self.output_text = Text(self, height=30, width=100)
+        self.output_text = Text(self, height=30, width=100, state=ctk.DISABLED)
         self.output_text.pack(pady=10)
 
         start_button = ctk.CTkButton(self, text="Start hashcat", command=self.start_process)
@@ -77,27 +77,47 @@ class ResultScreen(ctk.CTkFrame):
 
     def run_subprocess(self):
         command = build_command(self.user_hash, self.wordlist_path)
+        output = []
         
         try:
             # capture its output of the subprocess
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-
+            
             # Periodically check for new output
             while True:
                 output_line = process.stdout.readline()
                 if not output_line:
                     break  # No more output
                 self.update_output(output_line.strip())
+                if output_line.strip():
+                    output.append(output_line.strip())
 
             # wait for the process to complete
             process.wait()
+            for i in output:
+                print(i)
+                
+            if output and "Stopped" in output[-1]:
+                result_label = ctk.CTkLabel(self, text='', width=40)
+                hash_result = None
+                result = output[len(output) - 20].replace("Status...........: ", "").strip()
+                if result == "Exhausted":
+                    result_label.configure(text=f"No match found")
+                elif result == "Cracked":
+                    hash_result = output[len(output) - 22].split(":")[1]
+                
+                result_label.configure(text=f"Result: {hash_result}")
+                result_label.place(relx=0.625, rely=0.88)
 
         except Exception as e:
             self.update_output(f"Error: {e}")
+            print(f"Error: {e}")
 
     def update_output(self, text):
         # append the new text to the text widget
+        self.output_text.config(state=ctk.NORMAL)
         self.output_text.insert(ctk.END, text + "\n")
+        self.output_text.config(state=ctk.DISABLED)
         # show newest output
         self.output_text.see(ctk.END)
         # update event loop
