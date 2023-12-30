@@ -1,4 +1,5 @@
-#HashcatGUI
+# HashcatGUI
+
 A simple GUI for hashcat.
 
 ## What is this?
