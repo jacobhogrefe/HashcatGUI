@@ -6,7 +6,7 @@ Author: Jacob Hogrefe
 import customtkinter as ctk
 from tkinter import filedialog
 from tkinter import Text
-from HashcatWrapper import build_command
+from HashcatWrapper import build_command, hash_type
 import threading
 import subprocess
 
@@ -19,23 +19,27 @@ class InputScreen(ctk.CTkFrame):
     def create_widgets(self):
         # user input for given hash
         hash_entry_label = ctk.CTkLabel(self, text="Enter the hash you want to crack:")
-        hash_entry_label.pack(pady=5)
+        hash_entry_label.place(relx=0.05, rely=0.05, anchor=ctk.W)
 
         self.hash_entry_var = ctk.StringVar()
         hash_entry = ctk.CTkEntry(self, textvariable=self.hash_entry_var)
-        hash_entry.pack(pady=5)
+        hash_entry.place(relx=0.05, rely=0.125, anchor=ctk.W)
 
         # button to choose the wordlist
         wordlist_file_button = ctk.CTkButton(self, text="Wordlist File", command=self.choose_file)
-        wordlist_file_button.pack(pady=10)
+        wordlist_file_button.place(relx=0.05, rely=0.2, anchor=ctk.W)
 
         # display the wordlist path
         self.wordlist_file_label = ctk.CTkLabel(self, text="")
-        self.wordlist_file_label.pack(pady=5)
+        self.wordlist_file_label.place(relx=0.05, rely=0.275, anchor=ctk.W)
 
         # next button
         next_button = ctk.CTkButton(self, text="Next", command=self.next_screen)
-        next_button.pack(pady=10)
+        next_button.place(relx=0.85, rely=0.9, anchor=ctk.CENTER)
+        
+        # error label for user input
+        self.error_label = ctk.CTkLabel(self, text="")
+        self.error_label.place(relx=0.05, rely=0.87)
 
     def choose_file(self):
         file_path = filedialog.askopenfilename()
@@ -46,12 +50,17 @@ class InputScreen(ctk.CTkFrame):
         # pass user input and file path to the next screen
         user_hash = self.hash_entry_var.get()
         wordlist_path = self.wordlist_file_label.cget("text").replace("Wordlist File: ", "")
+        
+        # check if user provides a hash and wordlist
         if user_hash and wordlist_path:
-            self.master.show_screen(ResultScreen, user_hash=user_hash, wordlist_path=wordlist_path)
+            # check if the hash entered can be identified by the program
+            if hash_type(user_hash) == None:
+                self.error_label.configure(text="Hash could not be identified")
+            else:
+                self.master.show_screen(ResultScreen, user_hash=user_hash, wordlist_path=wordlist_path)
         else:
             # display warning message that both fields need to be filled out
-            feedback_label = ctk.CTkLabel(self, text="Please enter a hash and choose a wordlist file.")
-            feedback_label.pack(pady=5)
+            self.error_label.configure(text="Please enter a hash and choose a wordlist file.")
 
 # screen for displaying the output of hashcat, and showing the result after cracking        
 class ResultScreen(ctk.CTkFrame):
@@ -83,11 +92,11 @@ class ResultScreen(ctk.CTkFrame):
             # capture its output of the subprocess
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             
-            # Periodically check for new output
+            # check for new output
             while True:
                 output_line = process.stdout.readline()
                 if not output_line:
-                    break  # No more output
+                    break
                 self.update_output(output_line.strip())
                 if output_line.strip():
                     output.append(output_line.strip())
